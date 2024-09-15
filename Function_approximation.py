@@ -28,7 +28,6 @@ class FunctionApproximator(nn.Module):
 # Hyperparameters
 learning_rate = 0.001
 num_epochs = 1000
-batch_size = 32
 
 # Create the model, loss function, and optimizer
 model = FunctionApproximator()
