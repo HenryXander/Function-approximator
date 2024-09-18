@@ -64,9 +64,9 @@ with torch.no_grad():
 
 # Plot the results
 plt.figure(figsize=(10, 6))
-plt.plot(x_train, y_train, label='True Function (sin(x))', color='b')
+plt.plot(x_train, y_train, label='Sine function', color='b')
 plt.plot(x_train, predicted, label='Neural Network Approximation', color='r')
-plt.title('Function Approximation using Neural Network')
+plt.title('Sine function approximation')
 plt.xlabel('x')
 plt.ylabel('y')
 plt.legend()
