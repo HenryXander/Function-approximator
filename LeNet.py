@@ -1,6 +1,7 @@
 import torch
 from torchvision import datasets, transforms
 import numpy as np
+import cv2
 
 class LeNet(torch.nn.Module):
     def __init__(self):
@@ -24,13 +25,10 @@ class LeNet(torch.nn.Module):
         output = self.fc3(f6)
         return output
 
-
-
-
 def train_neural_net(NN, x_train_tensor, y_train_tensor):
     # Hyperparameters
     learning_rate = 0.001
-    num_epochs = 200
+    num_epochs = 25
 
     # Create the model, loss function, and optimizer
     model = NN
@@ -55,9 +53,8 @@ def train_neural_net(NN, x_train_tensor, y_train_tensor):
             optimizer.step()
 
         # Print the loss for every 100 epochs
-        if (epoch + 1) % 50 == 0:
+        if (epoch + 1) % 5 == 0:
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
-
 
 
 if __name__ == '__main__':
@@ -66,7 +63,7 @@ if __name__ == '__main__':
     # Load the MNIST dataset with the specified transformation
     mnist_pytorch = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 
-    SIZE = 50
+    SIZE = 100
     indices = list(range(SIZE))
     mnist_subset = torch.utils.data.Subset(mnist_pytorch, indices)
 
@@ -81,17 +78,63 @@ if __name__ == '__main__':
 
     train_neural_net(net, images, labels)
 
-    test_subset = torch.utils.data.Subset(mnist_pytorch, [11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
-    test_dataloader = torch.utils.data.DataLoader(test_subset, batch_size=10, shuffle=False)
+    mnist_test_subset = torch.utils.data.Subset(mnist_pytorch, list(range(100)))
+    test_loader = torch.utils.data.DataLoader(mnist_test_subset, batch_size=100, shuffle=False)
 
-    for batch in test_dataloader:
-        (test_images, test_labels) = batch
+    total = 0
+    correct = 0
 
-        net.eval()
-        with torch.no_grad():
-            test_label = iter(test_labels)
-            for test_image in test_images:
+    net.eval()
+    with torch.no_grad():
+        for test_images, labels in test_loader:
+            for i in range(len(test_images)):  # Loop through each image in the batch
+                test_image = test_images[i]  # Get one image
+                label = labels[i]  # Get corresponding label
+
+                # Forward pass
                 output_layer = net(test_image)
                 output_softmax = torch.nn.functional.softmax(output_layer, dim=0)
+                predicted_label = torch.argmax(output_softmax, dim=0)
+
+                total += 1
+                if predicted_label == label:
+                    correct += 1
+
+    # Calculate accuracy
+    accuracy = 100 * correct / total
+    print(f'Accuracy of the model on the test set: {accuracy:.2f}%')
+
+
+
+
+    #webcam()
+
+
+def image_to_tensor(image):
+    transform = transforms.Compose([transforms.ToTensor()])
+
+    test_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    test_image = cv2.GaussianBlur(test_image, (5, 5), 0)
+    ret, test_image = cv2.threshold(test_image, 120, 255, cv2.THRESH_TOZERO)  # thresholding
+    test_image = cv2.resize(test_image, (28, 28))  # Gray scale and 28 op 28
+    cv2.imshow('test image', test_image)
+    cv2.waitKey(0)
+
+    test_image_tensor = transform(test_image)
+    return test_image_tensor
+def webcam():
+    while True:
+        cam = cv2.VideoCapture(0)
+        result, image = cam.read()
+        if result:
+            test_image_tensor = image_to_tensor(image)
+            print(test_image_tensor)
+            with torch.no_grad():
+                output_layer = net(test_image_tensor)
+                output_softmax = torch.nn.functional.softmax(output_layer, dim=0)
                 predicted_label = np.argmax(output_softmax)
-                print(f"\nLeNet : {predicted_label}\nlabel : {next(test_label)}")
+                print(f"LeNet : {predicted_label}")
+                #cv2.imshow('handwritten digit', cv2.resize(image, (400, 400)))
+                #cv2.waitKey(0)
+        else:
+            print("Webcam failed")
