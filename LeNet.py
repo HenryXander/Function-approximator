@@ -28,7 +28,7 @@ class LeNet(torch.nn.Module):
 def train_neural_net(NN, x_train_tensor, y_train_tensor):
     # Hyperparameters
     learning_rate = 0.001
-    num_epochs = 25
+    num_epochs = 2
 
     # Create the model, loss function, and optimizer
     model = NN
@@ -53,7 +53,7 @@ def train_neural_net(NN, x_train_tensor, y_train_tensor):
             optimizer.step()
 
         # Print the loss for every 100 epochs
-        if (epoch + 1) % 5 == 0:
+        if (epoch + 1) % 2 == 0:
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     # Load the MNIST dataset with the specified transformation
     mnist_pytorch = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 
-    SIZE = 100
+    SIZE = 5000
     indices = list(range(SIZE))
     mnist_subset = torch.utils.data.Subset(mnist_pytorch, indices)
 
@@ -85,6 +85,9 @@ if __name__ == '__main__':
     correct = 0
 
     net.eval()
+    IMAGES = []
+    LABELS = []
+    PREDICTED = []
     with torch.no_grad():
         for test_images, labels in test_loader:
             for i in range(len(test_images)):  # Loop through each image in the batch
@@ -99,13 +102,22 @@ if __name__ == '__main__':
                 total += 1
                 if predicted_label == label:
                     correct += 1
+                IMAGES.append(test_image)
+                LABELS.append(label)
+                PREDICTED.append(predicted_label)
 
     # Calculate accuracy
     accuracy = 100 * correct / total
     print(f'Accuracy of the model on the test set: {accuracy:.2f}%')
 
-
-
+    for i in range(len(IMAGES)):
+        image = IMAGES[i]
+        image = torch.squeeze(image, 0)
+        label = LABELS[i]
+        predicted = PREDICTED[i]
+        numpy_image = (image.numpy() * 255).astype(np.uint8)
+        cv2.imshow(f"Label: {label}   Predicted: {predicted}", cv2.resize(numpy_image, (400, 400)))
+        cv2.waitKey()
 
     #webcam()
 
